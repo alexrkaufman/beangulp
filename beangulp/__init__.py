@@ -64,6 +64,9 @@ def _extract(ctx, src, output, existing, reverse, failfast, quiet):
     associated to the source document.
 
     """
+    if len(src) == 0 and "src" in ctx.defaults:
+        src = (ctx.defaults["src"],) if isinstance(ctx.defaults["src"], str) else ctx.defaults["src"]
+
     verbosity = -quiet
     log = utils.logger(verbosity, err=True)
     errors = exceptions.ExceptionsTrap(log)
@@ -142,6 +145,10 @@ def _archive(ctx, src, destination, dry_run, overwrite, failfast, quiet):
     directory in which the ingest script is located.
 
     """
+
+    if len(src) == 0 and "src" in ctx.defaults:
+        src = (ctx.defaults["src"],) if isinstance(ctx.defaults["src"], str) else ctx.defaults["src"]
+
     # If the output directory is not specified, move the files at the
     # root where the import script is located. Providing this default
     # seems better than using a required option.
@@ -214,6 +221,9 @@ def _identify(ctx, src, failfast, verbose):
     log = utils.logger(verbose)
     errors = exceptions.ExceptionsTrap(log)
 
+    if len(src) == 0 and "src" in ctx.defaults:
+        src = (ctx.defaults["src"],) if isinstance(ctx.defaults["src"], str) else ctx.defaults["src"]
+
     for filename in _walk(src, log):
         with errors:
             importer = identify.identify(ctx.importers, filename)
@@ -257,9 +267,10 @@ def _importer(importer):
 
 
 class Ingest:
-    def __init__(self, importers, hooks=None):
+    def __init__(self, importers, hooks=None, defaults=None):
         self.importers = [_importer(i) for i in importers]
         self.hooks = list(hooks) if hooks is not None else []
+        self.defaults = defaults if defaults is not None else {}
 
         while extract.find_duplicate_entries in self.hooks:
             self.hooks.remove(extract.find_duplicate_entries)
